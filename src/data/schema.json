@@ -1,0 +1,131 @@
+{
+  "_comment": "Static JSON schema for 100 Days Finance Pro — backend integration contract",
+  "_version": "1.0.0",
+
+  "endpoints": {
+    "customers": {
+      "list":   "GET    /api/customers",
+      "create": "POST   /api/customers",
+      "get":    "GET    /api/customers/:id",
+      "update": "PUT    /api/customers/:id",
+      "delete": "DELETE /api/customers/:id",
+      "loans":  "GET    /api/customers/:id/loans"
+    },
+    "loans": {
+      "list":   "GET    /api/loans?status=active|closed&customerId=",
+      "create": "POST   /api/loans",
+      "get":    "GET    /api/loans/:id",
+      "update": "PUT    /api/loans/:id",
+      "close":  "PATCH  /api/loans/:id/close",
+      "extend": "PATCH  /api/loans/:id/extend"
+    },
+    "entries": {
+      "list":   "GET    /api/loans/:loanId/entries",
+      "create": "POST   /api/loans/:loanId/entries",
+      "update": "PUT    /api/entries/:id",
+      "delete": "DELETE /api/entries/:id"
+    },
+    "dashboard": {
+      "stats": "GET    /api/dashboard/stats",
+      "daily": "GET    /api/dashboard/daily?from=YYYY-MM-DD&to=YYYY-MM-DD"
+    }
+  },
+
+  "models": {
+    "Customer": {
+      "id":        { "type": "string", "format": "uuid", "generated": true },
+      "name":      { "type": "string", "required": true, "maxLength": 100 },
+      "phone":     { "type": "string", "required": true, "pattern": "^[6-9]\\d{9}$" },
+      "address":   { "type": "string", "required": false, "maxLength": 250 },
+      "createdAt": { "type": "string", "format": "ISO8601", "generated": true },
+      "updatedAt": { "type": "string", "format": "ISO8601", "generated": true }
+    },
+
+    "Loan": {
+      "id":          { "type": "string", "format": "uuid", "generated": true },
+      "customerId":  { "type": "string", "format": "uuid", "required": true, "ref": "Customer" },
+      "loanAmount":  { "type": "number", "required": true, "min": 1, "description": "Total principal in INR" },
+      "dailyAmount": { "type": "number", "required": true, "min": 1, "description": "Expected collection per day in INR" },
+      "totalDays":   { "type": "integer", "required": true, "default": 100, "min": 1 },
+      "startDate":   { "type": "string", "format": "YYYY-MM-DD", "required": true },
+      "endDate":     { "type": "string", "format": "YYYY-MM-DD", "required": true, "computed": "startDate + totalDays - 1" },
+      "status":      { "type": "enum", "values": ["active", "closed"], "default": "active" },
+      "createdAt":   { "type": "string", "format": "ISO8601", "generated": true },
+      "updatedAt":   { "type": "string", "format": "ISO8601", "generated": true }
+    },
+
+    "LoanEntry": {
+      "id":        { "type": "string", "format": "uuid", "generated": true },
+      "loanId":    { "type": "string", "format": "uuid", "required": true, "ref": "Loan" },
+      "date":      { "type": "string", "format": "YYYY-MM-DD", "required": true, "description": "The calendar day this entry belongs to" },
+      "amount":    { "type": "number", "required": true, "min": 0 },
+      "type":      { "type": "enum", "values": ["payment", "missed", "adjustment"], "required": true },
+      "note":      { "type": "string", "required": false, "maxLength": 500 },
+      "createdAt": { "type": "string", "format": "ISO8601", "generated": true },
+      "updatedAt": { "type": "string", "format": "ISO8601", "generated": true }
+    }
+  },
+
+  "computed": {
+    "LoanStats": {
+      "_note": "Computed on the fly — not stored in DB",
+      "totalPaid":     "SUM(entries WHERE type IN [payment, adjustment])",
+      "totalMissed":   "COUNT(entries WHERE type = missed)",
+      "totalPending":  "loanAmount - totalPaid",
+      "progressPct":   "ROUND((totalPaid / loanAmount) * 100)",
+      "payDays":       "COUNT(entries WHERE type = payment)",
+      "pastNoEntry":   "Dates in [startDate..today-1] with no LoanEntry row",
+      "isOverdue":     "today > endDate AND totalPaid < loanAmount",
+      "extendedDates": "Dates of entries WHERE date > endDate"
+    }
+  },
+
+  "rules": {
+    "uniqueEntryPerDay": "One LoanEntry per (loanId, date) enforced at DB level (UNIQUE constraint)",
+    "extensionPattern":  "Loan extension adds N days to totalDays and recalculates endDate",
+    "closedLoanGuard":   "No new entries allowed when Loan.status = closed",
+    "cascadeDelete":     "Deleting a Customer soft-deletes or orphans its Loans; Loans cascade-delete their Entries",
+    "currency":          "All monetary values are integers or fixed-2 decimals in INR (Indian Rupee ₹)"
+  },
+
+  "mockData": {
+    "customers": [
+      { "id": "cust-001", "name": "Ravi Kumar",   "phone": "9876543210", "address": "12 Anna Salai, Chennai" },
+      { "id": "cust-002", "name": "Priya Sharma", "phone": "9123456780", "address": "45 MG Road, Bangalore" },
+      { "id": "cust-003", "name": "Suresh Babu",  "phone": "9000011122", "address": "7 Park Street, Coimbatore" }
+    ],
+    "loans": [
+      {
+        "id": "loan-001", "customerId": "cust-001",
+        "loanAmount": 10000, "dailyAmount": 100, "totalDays": 100,
+        "startDate": "2026-01-04", "endDate": "2026-04-14", "status": "active"
+      },
+      {
+        "id": "loan-002", "customerId": "cust-002",
+        "loanAmount": 10000, "dailyAmount": 100, "totalDays": 100,
+        "startDate": "2026-01-22", "endDate": "2026-05-02", "status": "active"
+      }
+    ],
+    "entries": [
+      { "id": "ent-001", "loanId": "loan-001", "date": "2026-01-04", "amount": 100, "type": "payment" },
+      { "id": "ent-002", "loanId": "loan-001", "date": "2026-01-05", "amount": 100, "type": "payment" },
+      { "id": "ent-003", "loanId": "loan-001", "date": "2026-01-08", "amount":   0, "type": "missed" },
+      { "id": "ent-004", "loanId": "loan-002", "date": "2026-01-22", "amount": 100, "type": "payment" },
+      { "id": "ent-005", "loanId": "loan-001", "date": "2026-01-10", "amount": 200, "type": "adjustment", "note": "Double payment for missed day" }
+    ]
+  },
+
+  "apiResponseEnvelopes": {
+    "success": {
+      "status":  "success",
+      "data":    "<model | model[]>",
+      "meta":    { "page": 1, "limit": 50, "total": 100 }
+    },
+    "error": {
+      "status":  "error",
+      "code":    "VALIDATION_ERROR | NOT_FOUND | UNAUTHORIZED | CONFLICT",
+      "message": "Human readable message",
+      "details": []
+    }
+  }
+}
