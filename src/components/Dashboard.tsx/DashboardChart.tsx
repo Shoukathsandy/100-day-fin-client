@@ -53,7 +53,24 @@ export default function DashboardChart({ data }: Props) {
                 width={48}
               />
               <Tooltip
-                formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Collected']}
+                formatter={(value) => {
+                  let amount = 0
+
+                  if (typeof value === 'number') {
+                    amount = value
+                  } else if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) {
+                    amount = Number(value)
+                  } else if (Array.isArray(value) && value.length > 0) {
+                    const first = value[0]
+                    amount = typeof first === 'number' ? first : Number(first)
+                  }
+
+                  const display = Number.isFinite(amount)
+                    ? `₹${amount.toLocaleString('en-IN')}`
+                    : '₹0'
+
+                  return [display, 'Collected'] as const
+                }}
                 cursor={{ fill: 'hsl(var(--muted))' }}
               />
               <Bar
