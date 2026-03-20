@@ -89,7 +89,7 @@ export default function LoanDetail() {
   function openAdd(date: string) {
     const existing = entryByDate.get(date)
     if (existing) { openEdit(existing); return }
-    setEntryForm({ amount: String(loan.dailyAmount), type: 'payment', note: '', date })
+    setEntryForm({ amount: String(loan!.dailyAmount), type: 'payment', note: '', date })
     setSheet({ mode: 'add', date })
   }
 
@@ -106,7 +106,7 @@ export default function LoanDetail() {
       const amount = parseFloat(entryForm.amount) || 0
       if (sheet.mode === 'add') {
         await addEntry({
-          loanId: loan.id,
+          loanId: loan!.id,
           date: entryForm.date,
           amount,
           type: entryForm.type,
@@ -139,7 +139,7 @@ export default function LoanDetail() {
 
   async function handleMarkMissed(date: string) {
     try {
-      await addEntry({ loanId: loan.id, date, amount: 0, type: 'missed' })
+      await addEntry({ loanId: loan!.id, date, amount: 0, type: 'missed' })
     } catch (err) {
       console.error(err)
     }
@@ -151,9 +151,9 @@ export default function LoanDetail() {
     if (!days || days <= 0) return
     setSaving(true)
     try {
-      await updateLoan(loan.id, {
-        endDate: addDays(loan.endDate, days),
-        totalDays: loan.totalDays + days,
+      await updateLoan(loan!.id, {
+        endDate: addDays(loan!.endDate, days),
+        totalDays: loan!.totalDays + days,
       })
       setExtendDays('')
       setShowExtend(false)
@@ -165,7 +165,7 @@ export default function LoanDetail() {
   async function handleClose() {
     setSaving(true)
     try {
-      await closeLoan(loan.id)
+      await closeLoan(loan!.id)
       setConfirmClose(false)
     } finally {
       setSaving(false)

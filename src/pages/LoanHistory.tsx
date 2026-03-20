@@ -69,7 +69,16 @@ export default function LoanHistory() {
                   tick={{ fontSize: 10 }}
                 />
                 <Tooltip
-                  formatter={(v: number) => `₹${v.toLocaleString('en-IN')}`}
+                  formatter={(value) => {
+                    let amount = 0
+                    if (typeof value === 'number') amount = value
+                    else if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) amount = Number(value)
+                    else if (Array.isArray(value) && value.length > 0) {
+                      const first = value[0]
+                      amount = typeof first === 'number' ? first : Number(first)
+                    }
+                    return `₹${Number.isFinite(amount) ? amount.toLocaleString('en-IN') : 0}`
+                  }}
                   cursor={{ fill: 'hsl(var(--muted))' }}
                 />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
