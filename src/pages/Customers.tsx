@@ -10,11 +10,12 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
 import { Pencil, Trash2, Plus, User, Phone, MapPin, CreditCard, Loader2 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const EMPTY = { name: '', phone: '', address: '' }
 
 export default function Customers() {
-  const { customers, loans, addCustomer, updateCustomer, deleteCustomer } = useFinance()
+  const { customers, loans, loading, addCustomer, updateCustomer, deleteCustomer } = useFinance()
   const navigate = useNavigate()
 
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -78,6 +79,44 @@ export default function Customers() {
 
   function activeLoansCount(customerId: string) {
     return loans.filter(l => l.customerId === customerId && l.status === 'active').length
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <Skeleton className="h-9 w-56" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-9 w-9 rounded-full" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-36" />
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-8 flex-1" />
+                  <Skeleton className="h-8 flex-1" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (

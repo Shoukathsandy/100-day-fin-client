@@ -7,7 +7,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Outlet, useLocation } from "react-router-dom"
 import { useFinance } from "@/context/FinanceContext"
-import { Loader2, WifiOff, RefreshCw } from "lucide-react"
+import { WifiOff, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const breadcrumbMap: Record<string, string> = {
@@ -26,7 +26,7 @@ function getBreadcrumb(pathname: string): string {
 
 export default function Page() {
   const location = useLocation()
-  const { loading, error, refresh } = useFinance()
+  const { error, refresh } = useFinance()
   const pageTitle = getBreadcrumb(location.pathname)
 
   return (
@@ -43,13 +43,6 @@ export default function Page() {
             <Separator orientation="vertical" className="h-4" />
             <span className="text-sm font-medium text-muted-foreground">{pageTitle}</span>
 
-            {/* Inline loading indicator */}
-            {loading && (
-              <span className="ml-2 flex items-center gap-1 text-xs text-muted-foreground">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Loading…
-              </span>
-            )}
           </header>
 
           {/* Error Banner */}
@@ -66,14 +59,7 @@ export default function Page() {
 
           {/* Content */}
           <main className="flex-1 overflow-y-auto bg-background p-3 lg:p-6">
-            {loading && !error ? (
-              <div className="flex flex-col items-center justify-center py-32 text-muted-foreground gap-3">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <p className="text-sm">Connecting to server…</p>
-              </div>
-            ) : (
-              <Outlet />
-            )}
+            <Outlet />
           </main>
 
         </SidebarInset>

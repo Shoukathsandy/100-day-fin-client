@@ -5,9 +5,10 @@ import DashboardChart from '@/components/Dashboard.tsx/DashboardChart'
 import { IndianRupee, Users, Wallet, AlertTriangle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Dashboard() {
-  const { customers, loans, entries } = useFinance()
+  const { customers, loans, entries, loading } = useFinance()
   const navigate = useNavigate()
   const todayStr = today()
 
@@ -46,6 +47,46 @@ export default function Dashboard() {
 
   // Upcoming due (active loans with no entry today)
   const dueTodayLoans = activeLoans.filter(l => !entries.some(e => e.loanId === l.id && e.date === todayStr))
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <div className="flex gap-2 flex-wrap">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-28" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-28" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Skeleton className="h-7 w-24" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="pb-2"><Skeleton className="h-4 w-40" /></CardHeader>
+              <CardContent><Skeleton className="h-48 w-full" /></CardContent>
+            </Card>
+          </div>
+          <Card>
+            <CardHeader className="pb-2"><Skeleton className="h-4 w-32" /></CardHeader>
+            <CardContent className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-7 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">

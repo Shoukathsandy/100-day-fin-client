@@ -8,9 +8,10 @@ import { Eye, Search } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function LoanHistory() {
-  const { loans, customers, entries } = useFinance()
+  const { loans, customers, entries, loading } = useFinance()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all')
@@ -44,6 +45,61 @@ export default function LoanHistory() {
 
   if (sort === 'date') filtered = [...filtered].sort((a, b) => b.startDate.localeCompare(a.startDate))
   else filtered = [...filtered].sort((a, b) => b.loanAmount - a.loanAmount)
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <div className="space-y-1">
+          <Skeleton className="h-7 w-36" />
+          <Skeleton className="h-4 w-52" />
+        </div>
+        <Card>
+          <CardHeader className="pb-2"><Skeleton className="h-4 w-56" /></CardHeader>
+          <CardContent><Skeleton className="h-52 w-full" /></CardContent>
+        </Card>
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-8 w-28" />
+        </div>
+        <div className="rounded-lg border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                {['Customer', 'Loan Amount', 'Period', 'Progress', 'Paid', 'Pending', 'Status', ''].map(h => (
+                  <th key={h} className="px-4 py-2.5 text-left">
+                    <Skeleton className="h-3 w-16" />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-7 w-7 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-2.5 w-16" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3"><Skeleton className="h-3 w-16" /></td>
+                  <td className="px-4 py-3 hidden sm:table-cell"><Skeleton className="h-3 w-20" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-2 w-24 rounded-full" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-3 w-14 ml-auto" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-3 w-14 ml-auto" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-7 w-7" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">

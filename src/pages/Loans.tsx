@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import {
   Plus, Eye, IndianRupee, Calendar, CheckCircle2, XCircle, Clock
 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function progressColor(pct: number) {
   if (pct >= 80) return 'bg-green-500'
@@ -13,7 +14,7 @@ function progressColor(pct: number) {
 }
 
 export default function Loans() {
-  const { loans, customers, entries } = useFinance()
+  const { loans, customers, entries, loading } = useFinance()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const filterCustomer = params.get('customerId')
@@ -131,6 +132,42 @@ export default function Loans() {
           </div>
         </CardContent>
       </Card>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-4 w-36" />
+          </div>
+          <Skeleton className="h-9 w-28" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between">
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-7 w-16" />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <Skeleton className="h-10" />
+                  <Skeleton className="h-10" />
+                  <Skeleton className="h-10" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+                <Skeleton className="h-3 w-40" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     )
   }
 
