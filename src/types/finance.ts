@@ -3,6 +3,7 @@ export interface Customer {
   name: string
   phone: string
   address: string
+  panCard: string
   createdAt: string
 }
 
@@ -14,6 +15,7 @@ export interface Loan {
   startDate: string   // YYYY-MM-DD
   endDate: string     // YYYY-MM-DD (startDate + totalDays - 1)
   totalDays: number   // default 100
+  loanNumber: string // YYYYNNN format (e.g. 2026001)
   status: 'active' | 'closed'
   createdAt: string
 }

@@ -21,15 +21,18 @@ interface FinanceCtx {
   loans: Loan[]
   entries: LoanEntry[]
   loading: boolean
+  initialized: boolean
   error: string | null
   clearError(): void
   refresh(): Promise<void>
+
+  getLoanNumber(loan: Loan): string
 
   addCustomer(data: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer>
   updateCustomer(id: string, data: Partial<Omit<Customer, 'id' | 'createdAt'>>): Promise<void>
   deleteCustomer(id: string): Promise<void>
 
-  addLoan(data: Omit<Loan, 'id' | 'status' | 'createdAt'>): Promise<Loan>
+  addLoan(data: Omit<Loan, 'id' | 'status' | 'createdAt' | 'loanNumber'>): Promise<Loan>
   updateLoan(id: string, data: Partial<Loan>): Promise<void>
   closeLoan(id: string): Promise<void>
 
@@ -53,6 +56,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [loans, setLoans] = useState<Loan[]>([])
   const [entries, setEntries] = useState<LoanEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [initialized, setInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // ── initial data load ──────────────────────────────────────────────────────
@@ -74,6 +78,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       setError(msg)
     } finally {
       setLoading(false)
+      setInitialized(true)
     }
   }, [])
 
@@ -99,7 +104,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   // ── loans ─────────────────────────────────────────────────────────────────
 
-  async function addLoan(data: Omit<Loan, 'id' | 'status' | 'createdAt'>): Promise<Loan> {
+  function getLoanNumber(loan: Loan): string {
+    const n = loan.loanNumber ?? ''
+    // Format YYYYNNN → YYYY-NNN (e.g. 2026001 → 2026-001)
+    if (n.length >= 5) return `${n.slice(0, 4)}-${n.slice(4)}`
+    return n
+  }
+
+  async function addLoan(data: Omit<Loan, 'id' | 'status' | 'createdAt' | 'loanNumber'>): Promise<Loan> {
     const created = await loanApi.create(data)
     setLoans(prev => [...prev, created])
     return created
@@ -146,9 +158,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider value={{
-      customers, loans, entries, loading, error,
+      customers, loans, entries, loading, initialized, error,
       clearError: () => setError(null),
       refresh,
+      getLoanNumber,
       addCustomer, updateCustomer, deleteCustomer,
       addLoan, updateLoan, closeLoan,
       addEntry, updateEntry, deleteEntry,

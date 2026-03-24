@@ -44,7 +44,10 @@ export const loanApi = {
     return req<Loan[]>('GET', `/api/loans${qs ? '?' + qs : ''}`)
   },
 
-  create: (data: Omit<Loan, 'id' | 'status' | 'createdAt'>) =>
+  nextNumber: () =>
+    req<{ loanNumber: string }>('GET', '/api/loans/next-number'),
+
+  create: (data: Omit<Loan, 'id' | 'status' | 'createdAt' | 'loanNumber'>) =>
     req<Loan>('POST', '/api/loans', data),
 
   update: (id: string, data: Partial<Loan>) =>

@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useFinance, addDays } from '@/context/FinanceContext'
+import { loanApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { ArrowLeft, IndianRupee, Calendar, User, Loader2 } from 'lucide-react'
+import { ArrowLeft, IndianRupee, Calendar, User, Loader2, Hash } from 'lucide-react'
 
 export default function CreateLoan() {
   const { customers, addLoan } = useFinance()
@@ -21,6 +22,25 @@ export default function CreateLoan() {
   })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [nextLoanNumber, setNextLoanNumber] = useState<string | null>(null)
+
+  function normalizeRupee(value: number): number | null {
+    if (!Number.isFinite(value)) return null
+    const rounded = Math.round(value)
+    const EPS = 1e-6
+    if (Math.abs(value - rounded) <= EPS) return rounded
+    return null
+  }
+
+  useEffect(() => {
+    loanApi.nextNumber()
+      .then(({ loanNumber }) => {
+        // Format YYYYNNN → YYYY-NNN
+        const n = loanNumber ?? ''
+        setNextLoanNumber(n.length >= 5 ? `${n.slice(0, 4)}-${n.slice(4)}` : n)
+      })
+      .catch(() => setNextLoanNumber(null))
+  }, [])
 
   function handleLoanAmountChange(val: string) {
     const amount = parseFloat(val) || 0
@@ -45,12 +65,12 @@ export default function CreateLoan() {
     setError('')
 
     if (!form.customerId) return setError('Please select a customer.')
-    const loanAmount  = parseFloat(form.loanAmount)
-    const dailyAmount = parseFloat(form.dailyAmount)
+    const loanAmount  = normalizeRupee(parseFloat(form.loanAmount))
+    const dailyAmount = normalizeRupee(parseFloat(form.dailyAmount))
     const totalDays   = parseInt(form.totalDays)
 
-    if (!loanAmount  || loanAmount  <= 0) return setError('Enter a valid loan amount.')
-    if (!dailyAmount || dailyAmount <= 0) return setError('Enter a valid daily amount.')
+    if (loanAmount  === null || loanAmount  <= 0) return setError('Enter a valid integer loan amount.')
+    if (dailyAmount === null || dailyAmount <= 0) return setError('Enter a valid integer daily amount.')
     if (!totalDays   || totalDays   <= 0) return setError('Enter valid total days.')
 
     setSaving(true)
@@ -86,8 +106,18 @@ export default function CreateLoan() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Loan Details</CardTitle>
-          <CardDescription>Daily collection = Loan Amount ÷ Total Days</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Loan Details</CardTitle>
+              <CardDescription>Daily collection = Loan Amount ÷ Total Days</CardDescription>
+            </div>
+            {nextLoanNumber && (
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-lg">
+                <Hash className="h-3.5 w-3.5" />
+                {nextLoanNumber}
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -134,7 +164,9 @@ export default function CreateLoan() {
                 <Input
                   id="loanAmount" type="number" min="1"
                   placeholder="e.g. 10000" className="pl-9"
+                  inputMode="numeric" step="1"
                   value={form.loanAmount}
+                  onWheel={e => (e.currentTarget as HTMLInputElement).blur()}
                   onChange={e => handleLoanAmountChange(e.target.value)}
                   required
                 />
@@ -160,7 +192,9 @@ export default function CreateLoan() {
                 <Input
                   id="dailyAmount" type="number" min="1"
                   placeholder="Auto-calculated" className="pl-9"
+                  inputMode="numeric" step="1"
                   value={form.dailyAmount}
+                  onWheel={e => (e.currentTarget as HTMLInputElement).blur()}
                   onChange={e => setForm(f => ({ ...f, dailyAmount: e.target.value }))}
                   required
                 />
@@ -209,6 +243,12 @@ export default function CreateLoan() {
                       ₹{(parseFloat(form.dailyAmount || '0') * (parseInt(form.totalDays) || 100)).toLocaleString('en-IN')}
                     </p>
                   </div>
+                  {nextLoanNumber && (
+                    <div className="col-span-2">
+                      <p className="text-muted-foreground">Loan Number</p>
+                      <p className="font-semibold font-mono">{nextLoanNumber}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
